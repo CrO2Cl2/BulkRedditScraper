@@ -222,7 +222,6 @@ while True:
   else:
     print("No shortening of the list is necessary. Saving Data to disk")
       
- 
   with open("saved_data.json", "w") as file:
   # Dump the list to the file as JSON
     json.dump(saved_data, file)
