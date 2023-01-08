@@ -16,9 +16,11 @@ subreddit_names = ['pics', 'funny', 'aww', 'photo', 'fountainpens', 'images', 'A
                    'NatureIsFuckingLit', 'DesirePaths', 'whatisthisthing', 'cocktails', 'mildlyinfuriating', 'Wellthatsucks', 'sketches', 'memes', 'dankmemes'] 
 
 # Number of images to scrape from each subreddit
-num_images = 130
+num_images = 40
 # time to sleep between scrapes 
 sleeptime = 360
+#skip NSFW
+skipNSFW = True
 #size of the desired image
 size = (128, 128)
 # Directory to save images to
@@ -49,8 +51,8 @@ def scrape_subreddit(subreddit_name):
   global saved_data
   global count
   global errorcount
-  global totalcount
-  totalcount = 0
+  global tokens
+
   # Set the maximum rate at which requests can be made
   max_rate = 40
 
@@ -60,7 +62,7 @@ def scrape_subreddit(subreddit_name):
   refill_rate = max_rate / 60
   # Initialize the number of tokens in the bucket to the maximum value
   tokens = bucket_size
-
+  refill_time = time.time()
   # Get the subreddit
   subreddit = reddit.subreddit(subreddit_name)
 
@@ -71,7 +73,6 @@ def scrape_subreddit(subreddit_name):
 
   # Scrape the images
   for submission in subreddit.new(limit=num_images):
-    totalcount += 1
     # Skip non-image submissions
     if submission.id in saved_data:
       print("data already processed")
@@ -82,16 +83,15 @@ def scrape_subreddit(subreddit_name):
       print("not an image|| skipping")
       continue
 
-    # Check if there are enough tokens in the bucket to make a request
     if tokens == 0:
-      # If there aren't enough tokens, refill the bucket and wait until the refill is complete
-      refill_time = time.time() + (bucket_size / refill_rate)
-      while time.time() < refill_time:
-        time.sleep(0.001)
-      tokens = bucket_size
+      # If there aren't enough tokens, refill the bucket gradually
+      tokens += refill_rate * (time.time() - refill_time)
+      refill_time = time.time()
     else:
       # If there are enough tokens, decrease the number of tokens by 1
       tokens -= 1
+
+
 
     # Download the image
     for i in range(3):
@@ -118,10 +118,11 @@ def scrape_subreddit(subreddit_name):
 
     if response.status_code != 200:
       continue
-    if submission.over_18:
-      # If the submission is NSFW, skip this submission
-      print(f"Submission {submission.id} is marked as NSFW. Skipping this submission.")
-      continue
+    if skipNSFW is True:
+      if submission.over_18:
+        # If the submission is NSFW, skip this submission
+        print(f"Submission {submission.id} is marked as NSFW. Skipping this submission.")
+        continue
 
     # Resize the image
     image = Image.open(BytesIO(response.content))
@@ -154,7 +155,7 @@ def scrape_subreddit(subreddit_name):
           errorcount += 1
           break
         
-      else:
+      else: 
         break
     else:
       print("slugificatin was not succesfull in handling the error. Skipping submission.")	
@@ -171,7 +172,6 @@ def scrape_subreddits():
   global errorcount
   count = 0
   errorcount = 0
-  totalcount = 0
   threads = []
   for subreddit_name in subreddit_names:
     thread = Thread(target=scrape_subreddit, args=(subreddit_name,))
@@ -185,8 +185,6 @@ def scrape_subreddits():
   elapsed_time = end_time - start_time
   print("----------------------------------------------------------------")
   print(f"this cycle took {elapsed_time} seconds")
-  totalcountsec =totalcount / elapsed_time
-  print(f"the the total data scraped amounts to {totalcount} pieces of data processed|{totalcountsec}/second")
   countmin = count /  ( elapsed_time / 60 )
   print(f"Scraped {count} images in this cycle|{countmin}/minute")
   print(f"{errorcount} errors were encuntered while scraping")
