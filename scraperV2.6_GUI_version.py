@@ -13,7 +13,7 @@ import tkinter as tk
 
 # Create the main window
 window = tk.Tk()
-window.title("My UI")
+window.title("BulkRedditScraper")
 
 # Create a frame for the output box
 output_frame = tk.Frame(window)
@@ -57,11 +57,13 @@ subreddit_names = ['pics', 'funny', 'aww', 'photo', 'fountainpens', 'images', 'A
                    'NatureIsFuckingLit', 'DesirePaths', 'whatisthisthing', 'cocktails', 'mildlyinfuriating', 'Wellthatsucks', 'sketches', 'memes', 'dankmemes'] 
 
 # Number of images to scrape from each subreddit
-num_images = 40
+try:
+  num_images = int(input_field.get())
+except ValueError:
+  output_box.insert(tk.END, "---------------please enter a valid number-----------------\n")
 # time to sleep between scrapes 
 sleeptime = 360
 #skip NSFW
-skipNSFW = True
 #size of the desired image
 size = (128, 128)
 # Directory to save images to
