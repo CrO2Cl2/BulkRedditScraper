@@ -57,10 +57,14 @@ subreddit_names = ['pics', 'funny', 'aww', 'photo', 'fountainpens', 'images', 'A
                    'NatureIsFuckingLit', 'DesirePaths', 'whatisthisthing', 'cocktails', 'mildlyinfuriating', 'Wellthatsucks', 'sketches', 'memes', 'dankmemes'] 
 
 # Number of images to scrape from each subreddit
-try:
-  num_images = int(input_field.get())
-except ValueError:
-  output_box.insert(tk.END, "---------------please enter a valid number-----------------\n")
+for i in range(50):
+  try:
+    num_images = int(input_field.get())
+  except ValueError:
+    output_box.insert(tk.END, "---------------please enter a valid number-----------------\n triying again in 5 seconds \n")
+    time.sleep(5)
+  else:
+    break
 # time to sleep between scrapes 
 sleeptime = 360
 #skip NSFW
@@ -195,14 +199,14 @@ def scrape_subreddit(subreddit_name):
           raise
       except ValueError as e:
         if str(e) == "unknown file extension: {ext}":
-          output_box.insert(tk.END, "Invalid File extention, skipping submission")
+          output_box.insert(tk.END, "Invalid File extention, skipping submission\n")
           errorcount += 1
           break
         
       else: 
         break
     else:
-      output_box.insert(tk.END, "slugificatin was not succesfull in handling the error. Skipping submission.")
+      output_box.insert(tk.END, "slugificatin was not succesfull in handling the error. Skipping submission.\n")
      
 
     # Increment the counter
@@ -227,11 +231,11 @@ def scrape_subreddits():
     thread.join()
   end_time = time.perf_counter()
   elapsed_time = end_time - start_time
-  print("----------------------------------------------------------------")
-  print(f"this cycle took {elapsed_time} seconds")
+  output_box.insert(tk.END, "----------------------------------------------------------------\n")
+  output_box.insert(tk.END, f"this cycle took {elapsed_time} seconds\n")
   countmin = count /  ( elapsed_time / 60 )
-  print(f"Scraped {count} images in this cycle|{countmin}/minute")
-  print(f"{errorcount} errors were encuntered while scraping")
+  output_box.insert(tk.END, f"Scraped {count} images in this cycle|{countmin}/minute\n")
+  output_box.insert(tk.END, f"{errorcount} errors were encuntered while scraping\n")
 #Indexing cylclenumber
 
 # Run the scraping function every 10 minutes indefinitely
@@ -240,39 +244,37 @@ def scrape():
   while True:
     start_time_total = time.perf_counter()
     cyclenumber += 1
-    print ("scraping cycle started...")
+    output_box.insert(tk.END, "scraping cycle started...\n")
     scrape_subreddits()
-    print("----------------------------------------------------------------")
-    print (f"scrape cylcle number {cyclenumber} finished...")
+    output_box.insert(tk.END, "----------------------------------------------------------------\n")
+    output_box.insert(tk.END, f"scrape cylcle number {cyclenumber} finished...\n")
     try:
       totalrate = count / (elapsed_time_total / 60 / 60 ) 
-      print(f"the total scraping rate is {totalrate}/hour")
+      output_box.insert(tk.END, f"the total scraping rate is {totalrate}/hour\n")
     except NameError:
-      print("the total scraping rate cannot be calculated on the first round of the scrape")
-    print("----------------------------------------------------------------")
-    print("saving already processed data for the next run")
+      output_box.insert(tk.END, "the total scraping rate cannot be calculated on the first round of the scrape\n")
+    output_box.insert(tk.END, "----------------------------------------------------------------\n")
+    output_box.insert(tk.END, "saving already processed data for the next run\n")
     #script to shorten the index data if needed
     list_size = sys.getsizeof(saved_data)
-    print(f"the index data is currently consuming: {list_size} Bytes ")
+    output_box.insert(tk.END, f"the index data is currently consuming: {list_size} Bytes\n ")
     desired_size_raw = desired_size * 1024 * 1024
     if list_size > desired_size_raw:
-      print("Shortening the list to the desired size...") 
+      output_box.insert(tk.END, "Shortening the list to the desired size...\n") 
       while list_size > desired_size_raw:
         # Remove the oldest entry from the list
         saved_data.pop(0)
         # Recalculate the size of the list in bytes
         list_size = sys.getsizeof(saved_data)
-      print("Done! Saving Data to disk")
+      output_box.insert(tk.End, "Done! Saving Data to disk \n")
     else:
-      print("No shortening of the list is necessary. Saving Data to disk")
+      output_box.insert(tk.END, "No shortening of the list is necessary. Saving Data to disk \n")
         
   
     with open("saved_data.json", "w") as file:
     # Dump the list to the file as JSON
       json.dump(saved_data, file)
-    print("Done")
-    print("----------------------------------------------------------------")
-    print ("waiting for the next scrape to start...")
+    output_box,insert(tk.END,"Done \n ---------------------------------------------------------------- \n waiting for the next scrape to start...")
     time.sleep(sleeptime)
     stop_time_total = time.perf_counter()
     elapsed_time_total = stop_time_total - start_time_total
