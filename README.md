@@ -2,4 +2,4 @@ This is a Reddit scraper to efficiently and continiously scrape reddit for pictu
 Right now the script is configured to retrieve images only and skip NSFW.
 the usage of this script is explained in the comments of the code
 
- PLEASE DO NOT USE THIS SCRAPER TO SCRAPE FOR "AI ART" ALGORYTHMS
+ PLEASE DO NOT USE THIS SCRAPER TO SCRAPE FOR STABLE DIFFUSION ALGORYTHMS AND OTHER ART GENERATING ALGORYTHMS
