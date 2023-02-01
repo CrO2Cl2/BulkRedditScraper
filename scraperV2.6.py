@@ -9,7 +9,7 @@ from io import BytesIO
 import json
 import sys
 # Set up Reddit API client
-reddit = praw.Reddit(client_id='InGKqVfSI1l66NbyCkiz7g', client_secret='Pg5uw5CwI2S7evS4Yc90kGx4tYBXUA', user_agent='ChromiumGuardian_scraper:V0.5')
+reddit = praw.Reddit(client_id='ID', client_secret='secret', user_agent='Bulk_scraper:V2.6')
 
 # List of subreddit names to scrape
 subreddit_names = ['pics', 'funny', 'aww', 'photo', 'fountainpens', 'images', 'Art', 'drawings', 'DigitalArt', 'blender', 'Watercolor',
