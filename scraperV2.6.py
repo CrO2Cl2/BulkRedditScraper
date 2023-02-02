@@ -1,3 +1,4 @@
+# importing packets
 import os
 import praw
 import requests
@@ -8,13 +9,12 @@ from PIL import Image
 from io import BytesIO
 import json
 import sys
+
+
 # Set up Reddit API client
 reddit = praw.Reddit(client_id='ID', client_secret='secret', user_agent='Bulk_scraper:V2.6')
-
 # List of subreddit names to scrape
-subreddit_names = ['pics', 'funny', 'aww', 'photo', 'fountainpens', 'images', 'Art', 'drawings', 'DigitalArt', 'blender', 'Watercolor',
-                   'NatureIsFuckingLit', 'DesirePaths', 'whatisthisthing', 'cocktails', 'mildlyinfuriating', 'Wellthatsucks', 'sketches', 'memes', 'dankmemes'] 
-
+subreddit_names = ['pics', 'funny', 'aww', 'photo'] 
 # Number of images to scrape from each subreddit
 num_images = 200
 # time to sleep between scrapes 
@@ -28,9 +28,11 @@ save_dir = 'picture_data'
 # directory to save the "index"to
 saved_data_file_path = "saved_data.json"
 #maximum size of the 'index' file in MB. This also is how much disk RAM is allocated to  the indexing of posts. 
-# It is usually not necessary to allocate more than the space needed by 2/3 cycles of scraping data
 desired_size = 7
 #initializing variables
+
+
+
 # Check if the file exists
 if not os.path.exists(saved_data_file_path):
   # If the file does not exist, create an empty list
@@ -51,18 +53,6 @@ def scrape_subreddit(subreddit_name):
   global saved_data
   global count
   global errorcount
-  global tokens
-
-  # Set the maximum rate at which requests can be made
-  max_rate = 40
-
-  # Set the size of the token bucket
-  bucket_size = max_rate
-  # Rate at which the tokens are added to the bucket
-  refill_rate = max_rate / 60
-  # Initialize the number of tokens in the bucket to the maximum value
-  tokens = bucket_size
-  refill_time = time.time()
   # Get the subreddit
   subreddit = reddit.subreddit(subreddit_name)
 
@@ -72,27 +62,17 @@ def scrape_subreddit(subreddit_name):
     os.makedirs(subreddit_save_dir)
 
   # Scrape the images
+  #checks if the data has already been processed
   for submission in subreddit.new(limit=num_images):
-    # Skip non-image submissions
     if submission.id in saved_data:
       print("data already processed")
       continue
     else:
       saved_data.append(submission.id)
+    # Skip non-image submissions
     if not submission.url.endswith(('.jpg', '.png',)):
       print("not an image|| skipping")
       continue
-
-    if tokens == 0:
-      # If there aren't enough tokens, refill the bucket gradually
-      tokens += refill_rate * (time.time() - refill_time)
-      refill_time = time.time()
-    else:
-      # If there are enough tokens, decrease the number of tokens by 1
-      tokens -= 1
-
-
-
     # Download the image
     for i in range(3):
       try:
@@ -118,11 +98,10 @@ def scrape_subreddit(subreddit_name):
 
     if response.status_code != 200:
       continue
-    if skipNSFW is True:
-      if submission.over_18:
-        # If the submission is NSFW, skip this submission
-        print(f"Submission {submission.id} is marked as NSFW. Skipping this submission.")
-        continue
+    if submission.over_18 and skipNSFW is True:
+      # If the submission is NSFW, skip this submission
+      print(f"Submission {submission.id} is marked as NSFW. Skipping this submission.")
+      continue
 
     # Resize the image
     image = Image.open(BytesIO(response.content))
@@ -163,7 +142,6 @@ def scrape_subreddit(subreddit_name):
     # Increment the counter
     count += 1
     print("saved  new image number: " + str(count) + " made by " + author)
-    #time.sleep(0.1)
 
 # Scrape the images in each subreddit in a separate thread
 def scrape_subreddits():
@@ -189,10 +167,9 @@ def scrape_subreddits():
   print(f"Scraped {count} images in this cycle|{countmin}/minute")
   print(f"{errorcount} errors were encuntered while scraping")
 #Indexing cylclenumber
-global cyclenumber 
 cyclenumber = 0
 
-# Run the scraping function every 10 minutes indefinitely
+# Run the scraping function indefinitely
 while True:
   start_time_total = time.perf_counter()
   cyclenumber += 1
