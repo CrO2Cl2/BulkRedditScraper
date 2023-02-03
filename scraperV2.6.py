@@ -9,11 +9,13 @@ from PIL import Image
 from io import BytesIO
 import json
 import sys
+import tqdm
 
 
 # Set up Reddit API client
 reddit = praw.Reddit(client_id='ID', client_secret='secret', user_agent='Bulk_scraper:V2.6')
 # List of subreddit names to scrape
+saving_method = "per_subreddit_name" #valid options are: "per_subreddit_name", "all_together"
 subreddit_names = ['pics', 'funny', 'aww', 'photo'] 
 # Number of images to scrape from each subreddit
 num_images = 200
@@ -57,13 +59,27 @@ def scrape_subreddit(subreddit_name):
   subreddit = reddit.subreddit(subreddit_name)
 
   # Create the directory to save images to, if it doesn't already exist
-  subreddit_save_dir = os.path.join(save_dir, subreddit_name)
-  if not os.path.exists(subreddit_save_dir):
-    os.makedirs(subreddit_save_dir)
+  if saving_method == "per_subreddit_name":
+    subreddit_save_dir = os.path.join(save_dir, subreddit_name)
+    if not os.path.exists(subreddit_save_dir):
+      os.makedirs(subreddit_save_dir)
+  elif saving_method == "all_together":
+    subreddit_save_dir = save_dir 
+  else:
+    print("ERROR!saving menthod does not corrispond to any of the valid values")
+    print("--------------------------------------------------------")
+    print("defaulting to per_subreddit_name")
+    subreddit_save_dir = os.path.join(save_dir, subreddit_name)
+    if not os.path.exists(subreddit_save_dir):
+      os.makedirs(subreddit_save_dir)
+    
+
 
   # Scrape the images
   #checks if the data has already been processed
-  for submission in subreddit.new(limit=num_images):
+  for submission in tqdm(subreddit.new(limit=num_images), desc="scraping data from: "+ str(subreddit)):
+    # rest of your code
+
     if submission.id in saved_data:
       print("data already processed")
       continue
@@ -72,6 +88,10 @@ def scrape_subreddit(subreddit_name):
     # Skip non-image submissions
     if not submission.url.endswith(('.jpg', '.png',)):
       print("not an image|| skipping")
+      continue
+    if submission.over_18 and skipNSFW is True:
+      # If the submission is NSFW, skip this submission
+      print(f"Submission {submission.id} is marked as NSFW. Skipping this submission.")
       continue
     # Download the image
     for i in range(3):
@@ -95,12 +115,12 @@ def scrape_subreddit(subreddit_name):
       print("Networking errors could not be solved skipping submission")
       break
 
-
-    if response.status_code != 200:
-      continue
-    if submission.over_18 and skipNSFW is True:
-      # If the submission is NSFW, skip this submission
-      print(f"Submission {submission.id} is marked as NSFW. Skipping this submission.")
+    response_code = response.status_code
+    if response_code != 200:
+      print(f"Networking error has occurred. reddit returned {response_code}")
+      print("skipping submission and waiting out")
+      errorcount += 1
+      time.sleep(2)
       continue
 
     # Resize the image
